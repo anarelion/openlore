@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using OpenLore.GameController;
+using OpenLore.resource_manager.file_formats.parsers;
 using OpenLore.resource_manager.godot_resources;
 using OpenLore.resource_manager.pack_file;
 
@@ -80,7 +81,7 @@ public partial class EqResourceLoader : Node
             return false;
         }
 
-        var archive = await PackFileParser.Load(FileName);
+        var archive = await PfsParser.Load(FileName);
         Images = await archive.ProcessImages();
 
         if (FileName.EndsWith(".s3d"))
@@ -116,7 +117,7 @@ public partial class EqResourceLoader : Node
         }
 
         if (wldFiles.TryGetValue("lights.wld", out var lightsWld))
-        {
+        {  
             GD.PrintErr($"EqResourceLoader: {Name} contains lights.wld but is unsupported: {lightsWld}");
         }
 
