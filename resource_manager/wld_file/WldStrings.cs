@@ -16,7 +16,7 @@ public partial class WldStrings : Resource
     public WldStrings(byte[] encoded)
     {
         var decoded = WldStringDecoder.Decode(encoded);
-
+        
         var index = 0;
         var splitHash = decoded.Split('\0');
 

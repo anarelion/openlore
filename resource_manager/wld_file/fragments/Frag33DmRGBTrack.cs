@@ -8,9 +8,9 @@ public partial class Frag33DmRGBTrack : WldFragment
 {
     [Export] public Frag32DmRGBTrackDef VertexColors;
 
-    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld, EqResourceLoader loader)
+    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld)
     {
-        base.Initialize(index, type, size, data, wld, loader);
+        base.Initialize(index, type, size, data, wld);
         Name = wld.GetName(Reader.ReadInt32());
         VertexColors = wld.GetFragment(Reader.ReadInt32()) as Frag32DmRGBTrackDef;
     }

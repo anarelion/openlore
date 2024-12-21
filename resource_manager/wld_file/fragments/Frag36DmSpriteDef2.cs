@@ -31,9 +31,9 @@ public partial class Frag36DmSpriteDef2 : WldFragment, IIntoGodotMesh
     [Export] public bool ExportSeparateCollision;
     [Export] public Godot.Collections.Array<MobVertexPiece> MobPieces;
 
-    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld, EqResourceLoader loader)
+    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld)
     {
-        base.Initialize(index, type, size, data, wld, loader);
+        base.Initialize(index, type, size, data, wld);
         Name = wld.GetName(Reader.ReadInt32());
 
         // Zone: 0x00018003, Objects: 0x00014003
@@ -86,7 +86,7 @@ public partial class Frag36DmSpriteDef2 : WldFragment, IIntoGodotMesh
         }
 
         for (var i = 0; i < textureCoordinateCount; ++i)
-            if (wld.IsNewWldFormat)
+            if (wld.NewFormat)
                 TextureUvCoordinates[i] = new Vector2(Reader.ReadSingle(), Reader.ReadSingle());
             else
                 TextureUvCoordinates[i] = new Vector2(Reader.ReadInt16() / 256.0f, Reader.ReadInt16() / 256.0f);
