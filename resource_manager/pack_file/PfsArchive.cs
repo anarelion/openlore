@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using Godot.Collections;
+using OpenLore.resource_manager.file_formats.parsers;
 using OpenLore.resource_manager.godot_resources;
 using OpenLore.resource_manager.wld_file;
 
@@ -69,7 +70,7 @@ public partial class PfsArchive : Resource
 
     private void ProcessWldResource(PfsFile pfsFile, int index, EqResourceLoader loader)
     {
-        var wld = new WldFile(pfsFile, loader);
+        var wld = WldParser.Parse(pfsFile);
         Files[index] = wld;
         WldFiles[pfsFile.Name] = wld;
     }

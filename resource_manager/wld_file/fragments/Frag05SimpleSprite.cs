@@ -11,13 +11,11 @@ public partial class Frag05SimpleSprite : WldFragment
     [Export] public int Flags;
     [Export] public Frag04SimpleSpriteDef SimpleSpriteDef { get; private set; }
 
-    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld, EqResourceLoader loader)
+    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld)
     {
-        base.Initialize(index, type, size, data, wld, loader);
+        base.Initialize(index, type, size, data, wld);
         Name = wld.GetName(Reader.ReadInt32());
         SimpleSpriteDef = wld.GetFragment(Reader.ReadInt32()) as Frag04SimpleSpriteDef;
-
-        // Either 0 or 80 - unknown
         Flags = Reader.ReadInt32();
     }
 

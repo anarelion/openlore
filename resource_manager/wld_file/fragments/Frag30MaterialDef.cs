@@ -17,9 +17,9 @@ public partial class Frag30MaterialDef : WldFragment, IIntoGodotMaterial
     [Export] public float ScaledAmbient;
     [Export] public bool IsHandled;
 
-    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld, EqResourceLoader loader)
+    public override void Initialize(int index, int type, int size, byte[] data, WldFile wld)
     {
-        base.Initialize(index, type, size, data, wld, loader);
+        base.Initialize(index, type, size, data, wld);
         Name = wld.GetName(Reader.ReadInt32());
         Flags = Reader.ReadInt32();
         RenderMethod = Reader.ReadUInt32();
@@ -95,97 +95,97 @@ public partial class Frag30MaterialDef : WldFragment, IIntoGodotMaterial
 
     public Material ToGodotMaterial()
     {
-        if (ShaderType is ShaderTypeEnumType.Boundary or ShaderTypeEnumType.Invisible)
-        {
+        // if (ShaderType is ShaderTypeEnumType.Boundary or ShaderTypeEnumType.Invisible)
+        // {
             return new StandardMaterial3D
             {
                 ResourceName = Name,
                 Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
                 AlbedoColor = new Color(1, 1, 1, 0),
             };
-        }
-
-        if (SimpleSprite != null)
-        {
-            var bitmapNames = SimpleSprite.GetAllBitmapNames();
-
-            if (SimpleSprite.SimpleSpriteDef.Animated)
-            {
-                Godot.Collections.Array<Image> a = [];
-                foreach (var image in bitmapNames.Select(Loader.GetImage))
-                {
-                    a.Add(ShouldApplyTransparency() ? image.Transparent() : image);
-                }
-
-                var texture2DArray = new Texture2DArray();
-                texture2DArray.CreateFromImages(ExpandTextureArray(a));
-
-                var code = "shader_type spatial;\n\n";
-
-                if (ShaderType is ShaderTypeEnumType.TransparentAdditive)
-                {
-                    code += "render_mode blend_add;\n";
-                }
-
-                code += @"
-                    uniform sampler2DArray textures;
-                    uniform int step_time;
-                    uniform int total_time;
-
-                    void fragment() {
-	                    int texture_number = (int(TIME * 1000.0) % total_time) / step_time;
-	                    vec4 texture_color = texture(textures, vec3(UV, float(texture_number)));
-	                    ALBEDO.rgb = texture_color.rgb;
-                    }
-                ";
-
-                var shader = new Shader()
-                {
-                    Code = code,
-                };
-
-                var animatedMaterial = new ShaderMaterial()
-                {
-                    ResourceName = Name,
-                    Shader = shader,
-                };
-                animatedMaterial.SetShaderParameter("textures", texture2DArray);
-                animatedMaterial.SetShaderParameter("step_time", SimpleSprite.SimpleSpriteDef.AnimationDelayMs);
-                animatedMaterial.SetShaderParameter("total_time",
-                    SimpleSprite.SimpleSpriteDef.AnimationDelayMs * bitmapNames.Count);
-                animatedMaterial.SetShaderParameter("render_method", RenderMethod);
-                animatedMaterial.SetMeta("render_method", $"0x{RenderMethod:x}");
-
-                return animatedMaterial;
-            }
-
-            var firstImage = Loader.GetImage(bitmapNames[0]);
-            var transparentMasked = new StandardMaterial3D
-            {
-                ResourceName = Name,
-                Transparency = ShouldApplyTransparency()
-                    ? BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass
-                    : BaseMaterial3D.TransparencyEnum.Disabled,
-                BlendMode = ShaderType is ShaderTypeEnumType.TransparentAdditive
-                    ? BaseMaterial3D.BlendModeEnum.Add
-                    : BaseMaterial3D.BlendModeEnum.Mix,
-                AlbedoTexture = ImageToTexture(ShouldApplyTransparency() ? firstImage.Transparent() : firstImage),
-                CullMode = (Flags & 0x1) != 0
-                    ? BaseMaterial3D.CullModeEnum.Disabled
-                    : BaseMaterial3D.CullModeEnum.Back,
-            };
-            transparentMasked.SetMeta("pfs_file_name", firstImage.GetMeta("pfs_file_name"));
-            transparentMasked.SetMeta("original_file_name", firstImage.GetMeta("original_file_name"));
-            transparentMasked.SetMeta("original_file_type", firstImage.GetMeta("original_file_type"));
-            transparentMasked.SetMeta("render_method", $"0x{RenderMethod:x}");
-            return transparentMasked;
-        }
-
-        GD.PrintErr($"Material: {Name} doesn't have a texture");
-        return new StandardMaterial3D()
-        {
-            ResourceName = Name
-        };
+//         }
+//
+//         if (SimpleSprite != null)
+//         {
+//             var bitmapNames = SimpleSprite.GetAllBitmapNames();
+//
+//             if (SimpleSprite.SimpleSpriteDef.Animated)
+//             {
+//                 Godot.Collections.Array<Image> a = [];
+//                 foreach (var image in bitmapNames.Select(Loader.GetImage))
+//                 {
+//                     a.Add(ShouldApplyTransparency() ? image.Transparent() : image);
+//                 }
+//
+//                 var texture2DArray = new Texture2DArray();
+//                 texture2DArray.CreateFromImages(ExpandTextureArray(a));
+//
+//                 var code = "shader_type spatial;\n\n";
+//
+//                 if (ShaderType is ShaderTypeEnumType.TransparentAdditive)
+//                 {
+//                     code += "render_mode blend_add;\n";
+//                 }
+//
+//                 code += @"
+//                     uniform sampler2DArray textures;
+//                     uniform int step_time;
+//                     uniform int total_time;
+//
+//                     void fragment() {
+// 	                    int texture_number = (int(TIME * 1000.0) % total_time) / step_time;
+// 	                    vec4 texture_color = texture(textures, vec3(UV, float(texture_number)));
+// 	                    ALBEDO.rgb = texture_color.rgb;
+//                     }
+//                 ";
+//
+//                 var shader = new Shader()
+//                 {
+//                     Code = code,
+//                 };
+//
+//                 var animatedMaterial = new ShaderMaterial()
+//                 {
+//                     ResourceName = Name,
+//                     Shader = shader,
+//                 };
+//                 animatedMaterial.SetShaderParameter("textures", texture2DArray);
+//                 animatedMaterial.SetShaderParameter("step_time", SimpleSprite.SimpleSpriteDef.AnimationDelayMs);
+//                 animatedMaterial.SetShaderParameter("total_time",
+//                     SimpleSprite.SimpleSpriteDef.AnimationDelayMs * bitmapNames.Count);
+//                 animatedMaterial.SetShaderParameter("render_method", RenderMethod);
+//                 animatedMaterial.SetMeta("render_method", $"0x{RenderMethod:x}");
+//
+//                 return animatedMaterial;
+//             }
+//
+//             var firstImage = Loader.GetImage(bitmapNames[0]);
+//             var transparentMasked = new StandardMaterial3D
+//             {
+//                 ResourceName = Name,
+//                 Transparency = ShouldApplyTransparency()
+//                     ? BaseMaterial3D.TransparencyEnum.AlphaDepthPrePass
+//                     : BaseMaterial3D.TransparencyEnum.Disabled,
+//                 BlendMode = ShaderType is ShaderTypeEnumType.TransparentAdditive
+//                     ? BaseMaterial3D.BlendModeEnum.Add
+//                     : BaseMaterial3D.BlendModeEnum.Mix,
+//                 AlbedoTexture = ImageToTexture(ShouldApplyTransparency() ? firstImage.Transparent() : firstImage),
+//                 CullMode = (Flags & 0x1) != 0
+//                     ? BaseMaterial3D.CullModeEnum.Disabled
+//                     : BaseMaterial3D.CullModeEnum.Back,
+//             };
+//             transparentMasked.SetMeta("pfs_file_name", firstImage.GetMeta("pfs_file_name"));
+//             transparentMasked.SetMeta("original_file_name", firstImage.GetMeta("original_file_name"));
+//             transparentMasked.SetMeta("original_file_type", firstImage.GetMeta("original_file_type"));
+//             transparentMasked.SetMeta("render_method", $"0x{RenderMethod:x}");
+//             return transparentMasked;
+//         }
+//
+//         GD.PrintErr($"Material: {Name} doesn't have a texture");
+//         return new StandardMaterial3D()
+//         {
+//             ResourceName = Name
+//         };
     }
 
     private bool ShouldApplyTransparency()
