@@ -1,4 +1,6 @@
-﻿using Godot;
+﻿using System.Linq;
+using Godot;
+using Godot.Collections;
 using OpenLore.resource_manager.wld_file.helpers;
 
 namespace OpenLore.resource_manager.wld_file.fragments;
@@ -38,5 +40,10 @@ public partial class Frag04SimpleSpriteDef : WldFragment
 
         BitmapNames = [];
         for (var i = 0; i < BitmapCount; ++i) BitmapNames.Add(wld.GetFragment(Reader.ReadInt32()) as Frag03BmInfo);
+    }
+    
+    public string[] GetAllBitmapNames()
+    {
+        return BitmapNames.Select(bitmapName => bitmapName.Filename).ToArray();
     }
 }

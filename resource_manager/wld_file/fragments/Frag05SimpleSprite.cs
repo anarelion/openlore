@@ -18,9 +18,4 @@ public partial class Frag05SimpleSprite : WldFragment
         SimpleSpriteDef = wld.GetFragment(Reader.ReadInt32()) as Frag04SimpleSpriteDef;
         Flags = Reader.ReadInt32();
     }
-
-    public List<string> GetAllBitmapNames()
-    {
-        return SimpleSpriteDef.BitmapNames.Select(bitmapName => bitmapName.Filename).ToList();
-    }
 }

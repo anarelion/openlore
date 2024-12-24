@@ -72,7 +72,7 @@ public partial class WldFile : Resource
         _fragmentTypeDictionary[type].Add(fragment);
     }
 
-    private List<T> GetFragmentsOfType<T>()
+    public List<T> GetFragmentsOfType<T>()
         where T : WldFragment
     {
         return !_fragmentTypeDictionary.ContainsKey(typeof(T))

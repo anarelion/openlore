@@ -193,57 +193,5 @@ public partial class Frag30MaterialDef : WldFragment, IIntoGodotMaterial
         return ShaderType is ShaderTypeEnumType.TransparentMasked or ShaderTypeEnumType.TransparentAdditive;
     }
 
-    private static ImageTexture ImageToTexture(Image image)
-    {
-        var texture = ImageTexture.CreateFromImage(image);
-        texture.ResourceName = image.ResourceName;
-        foreach (var metaName in image.GetMetaList())
-        {
-            texture.SetMeta(metaName, image.GetMeta(metaName));
-        }
-
-        return texture;
-    }
-
-    private static Godot.Collections.Array<Image> ExpandTextureArray(Godot.Collections.Array<Image> list)
-    {
-        var maxWidth = 0;
-        var maxHeight = 0;
-        foreach (var image in list)
-        {
-            if (image.GetHeight() > maxHeight) maxHeight = image.GetHeight();
-            if (image.GetWidth() > maxWidth) maxWidth = image.GetWidth();
-        }
-
-        foreach (var image in list)
-        {
-            var originalWidth = image.GetWidth();
-            if (image.GetWidth() < maxWidth)
-            {
-                image.Crop(maxWidth, image.GetHeight());
-                for (var i = 1;
-                     i < (maxWidth / originalWidth) + 1;
-                     i++)
-                {
-                    image.BlitRect(image, new Rect2I(0, 0, originalWidth, image.GetHeight()),
-                        new Vector2I(i * originalWidth, 0));
-                }
-            }
-
-            var originalHeight = image.GetHeight();
-            if (image.GetHeight() >= maxHeight) continue;
-            {
-                image.Crop(image.GetWidth(), maxHeight);
-                for (var i = 1;
-                     i < (maxHeight / originalHeight) + 1;
-                     i++)
-                {
-                    image.BlitRect(image, new Rect2I(0, 0, image.GetWidth(), originalHeight),
-                        new Vector2I(0, i * originalHeight));
-                }
-            }
-        }
-
-        return list;
-    }
+    
 }

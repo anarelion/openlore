@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using OpenLore.GameController;
 using OpenLore.resource_manager.file_formats.parsers;
 using OpenLore.resource_manager.godot_resources;
 using OpenLore.resource_manager.pack_file;
+using OpenLore.resource_manager.wld_file.fragments;
 
 namespace OpenLore.resource_manager;
 
@@ -19,7 +21,8 @@ public partial class EqResourceLoader : Node
     [Export] public bool Failed;
     [Export] public int AgeCounter;
 
-    [Export] public Godot.Collections.Dictionary<string, LoreImage> Images = [];
+    private readonly ResourceStore<LoreImage> _images = new();
+    private readonly ResourceStore<LoreTexture> _textures = new();
     [Export] public Godot.Collections.Dictionary<int, Material> Materials = [];
     [Export] public Godot.Collections.Dictionary<int, ArrayMesh> Meshes = [];
     [Export] public Godot.Collections.Dictionary<string, Resource> ActorDefs = [];
@@ -49,7 +52,7 @@ public partial class EqResourceLoader : Node
 
     public LoreImage GetImage(string imageName)
     {
-        return Failed ? null : Images.GetValueOrDefault(imageName);
+        return Failed ? null : _images.Get(imageName);
     }
 
     public Resource GetActor(string tag)
@@ -82,7 +85,29 @@ public partial class EqResourceLoader : Node
         }
 
         var archive = await PfsParser.Load(FileName);
-        Images = await archive.ProcessImages();
+
+        List<Task<(string, LoreImage)>> tasks = [];
+        for (var i = 0; i < archive.Files.Count; i++)
+        {
+            if (archive.Files[i] is not PfsFile file)
+            {
+                GD.PrintErr($"File is not PFSFile on index {i}");
+                continue;
+            }
+
+            if ((file.FileBytes[0] == 'D' && file.FileBytes[1] == 'D' && file.FileBytes[2] == 'S')
+                || (file.FileBytes[0] == 'B' && file.FileBytes[1] == 'M'))
+            {
+                var task = Task.Run(() => (file.Name, new LoreImage(file)));
+                tasks.Add(task);
+            }
+        }
+
+        var imageResults = await Task.WhenAll([..tasks]);
+        foreach (var im in imageResults)
+        {
+            _images.Add(im.Item1, im.Item2);
+        }
 
         if (FileName.EndsWith(".s3d"))
         {
@@ -109,22 +134,33 @@ public partial class EqResourceLoader : Node
 
     private async Task<bool> ProcessS3DFile(PfsArchive archive)
     {
-        GD.Print($"EqResourceLoader: processing S3D {FileName} - images {Images.Count}");
-        var wldFiles = archive.ProcessWldFiles(this);
-        if (wldFiles.TryGetValue("objects.wld", out var objectsWld))
+        GD.Print($"EqResourceLoader: processing S3D {FileName} - images {_images.Count}");
+        foreach (var file in archive.Files)
         {
-            GD.PrintErr($"EqResourceLoader: {Name} contains objects.wld but is unsupported: {objectsWld}");
+            if (file.Name != "objects.wld") continue;
+            var wld = WldParser.Parse(file);
+            GD.PrintErr($"EqResourceLoader: {Name} contains objects.wld but is unsupported");
+            break;
         }
 
-        if (wldFiles.TryGetValue("lights.wld", out var lightsWld))
-        {  
-            GD.PrintErr($"EqResourceLoader: {Name} contains lights.wld but is unsupported: {lightsWld}");
+        foreach (var file in archive.Files)
+        {
+            if (file.Name != "lights.wld") continue;
+            var wld = WldParser.Parse(file);
+            GD.PrintErr($"EqResourceLoader: {Name} contains lights.wld but is unsupported");
+            break;
         }
 
-        if (wldFiles.TryGetValue($"{Name}.wld", out var mainWld))
+        foreach (var file in archive.Files)
         {
-            ActorDefs = mainWld.ActorDefs;
-            ExtraAnimations = mainWld.ExtraAnimations;
+            if (file.Name != $"{Name}.wld") continue;
+            var wld = WldParser.Parse(file);
+            foreach (var frag04 in wld.GetFragmentsOfType<Frag04SimpleSpriteDef>())
+            {
+                _textures.Add(frag04.Name, new LoreTexture(frag04, this));
+            }
+
+            break;
         }
 
         return true;
@@ -132,7 +168,7 @@ public partial class EqResourceLoader : Node
 
     private async Task<bool> ProcessEQGFile(PfsArchive archive)
     {
-        GD.Print($"EqResourceLoader: processing EQG {FileName} - images {Images.Count}");
+        GD.Print($"EqResourceLoader: processing EQG {FileName} - images {_images.Count}");
         return true;
     }
 }
