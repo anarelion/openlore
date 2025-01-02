@@ -1,11 +1,12 @@
 ﻿using Godot;
+using Godot.Collections;
 using OpenLore.resource_manager.file_formats.converters;
 using OpenLore.resource_manager.pack_file;
 
-namespace OpenLore.resource_manager.godot_resources;
+namespace OpenLore.resource_manager.godot_resources.Intermediates;
 
 [GlobalClass]
-public partial class LoreImage : Resource
+public partial class LoreImage : Resource, ILoreResource<LoreImage>
 {
     [Export] private Image _baseline;
     [Export] private Image _withTransparency;
@@ -29,6 +30,7 @@ public partial class LoreImage : Resource
             _baseline = BmpConverter.FromFile(pfsFile);
         }
 
+        ResourceName = pfsFile.Name;
         SetMeta("pfs_file_name", pfsFile.ArchiveName);
         SetMeta("original_file_name", pfsFile.Name);
         SetMeta("original_file_type", _baseline.GetMeta("original_file_type"));
@@ -74,5 +76,38 @@ public partial class LoreImage : Resource
         }
 
         return _withTransparency;
+    }
+
+
+    public void Save(string path)
+    {
+        GD.Print($"LoreImage: saving path: {path}");
+        ResourcePath = path;
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+        var info = LoreFileHandlingUtils.StartDump(this);
+        var imagePath = path.Replace(GetExtension(), $"_image{LoreResourceCache.DATA_EXTENSION}");
+        GD.Print($"LoreImage: saving image path: {imagePath}");
+        ResourceSaver.Save(_baseline, imagePath);
+        info.Add("image", imagePath);
+        file.StoreVar(info);
+    }
+
+    public static LoreImage Load(string path)
+    {
+        GD.Print($"LoreImage: loading path: {path}");
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+
+        var info = (Dictionary<string, Variant>)file.GetVar();
+        var result = new LoreImage
+        {
+            _baseline = GD.Load<Image>((string)info["image"]),
+        };
+        LoreFileHandlingUtils.ApplyDump(result, info);
+        return result;
+    }
+
+    public static string GetExtension()
+    {
+        return ".lore_image";
     }
 }

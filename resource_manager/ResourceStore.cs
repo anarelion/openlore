@@ -1,27 +1,34 @@
-﻿using System.Net.Sockets;
-using Godot;
+﻿using Godot;
 using Godot.Collections;
+using CollectionExtensions = System.Collections.Generic.CollectionExtensions;
 
 namespace OpenLore.resource_manager;
 
 public class ResourceStore<[MustBeVariant] T> where T : Resource
 {
-    private readonly Dictionary<string, Array<T>> _items = [];
+    private readonly Dictionary<string, Array<T>> _byName = [];
+    private readonly Dictionary<int, T> _byIndex = [];
 
-    public void Add(string key, T resource)
+    public void Add(int index, string key, T resource)
     {
-        if (!_items.ContainsKey(key))
+        if (!_byName.ContainsKey(key))
         {
-            _items.Add(key, []);
+            _byName.Add(key, []);
         }
 
-        _items[key].Add(resource);
+        _byName[key].Add(resource);
+        _byIndex[index] = resource;
+    }
+    
+    public T Get(int key)
+    {
+        return CollectionExtensions.GetValueOrDefault(_byIndex, key);
     }
 
     public T Get(string key)
     {
-        return _items.TryGetValue(key, out var value) ? value[^1] : null;
+        return _byName.TryGetValue(key, out var value) ? value[^1] : null;
     }
     
-    public int Count => _items.Count;
+    public int Count => _byName.Count;
 }

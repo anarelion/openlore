@@ -265,8 +265,8 @@ public partial class Frag36DmSpriteDef2 : WldFragment, IIntoGodotMesh
             arrays[(int)Mesh.ArrayType.Index] = indices;
 
             mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
-            mesh.SurfaceSetMaterial(j, Wld.Materials[MaterialPalette.Materials[group.MaterialIndex].Index]);
-            mesh.SurfaceSetName(j, Wld.Materials[MaterialPalette.Materials[group.MaterialIndex].Index].GetName());
+            // mesh.SurfaceSetMaterial(j, Wld.Materials[MaterialPalette.Materials[group.MaterialIndex].Index]);
+            // mesh.SurfaceSetName(j, Wld.Materials[MaterialPalette.Materials[group.MaterialIndex].Index].GetName());
         }
 
         mesh.ResourceName = Name;

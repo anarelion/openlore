@@ -1,10 +1,8 @@
 ﻿using System.IO;
 using Godot;
-using Godot.Collections;
 using OpenLore.resource_manager.pack_file;
 using OpenLore.resource_manager.wld_file;
 using OpenLore.resource_manager.wld_file.fragments;
-using OpenLore.resource_manager.wld_file.helpers;
 
 namespace OpenLore.resource_manager.file_formats.parsers;
 

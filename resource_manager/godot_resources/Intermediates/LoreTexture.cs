@@ -4,12 +4,12 @@ using Godot;
 using Godot.Collections;
 using OpenLore.resource_manager.wld_file.fragments;
 
-namespace OpenLore.resource_manager.godot_resources;
+namespace OpenLore.resource_manager.godot_resources.Intermediates;
 
 [GlobalClass]
-public partial class LoreTexture : Resource
+public partial class LoreTexture : Resource, ILoreResource<LoreTexture>
 {
-    enum Mode
+    private enum Mode
     {
         Static,
         Animated,
@@ -18,6 +18,7 @@ public partial class LoreTexture : Resource
     [Export] private Mode _textureType;
     [Export] private ImageTexture _texture;
     [Export] private Texture2DArray _textureArray;
+    [Export] private Array<string> _textureArrayPaths = [];
     [Export] private int _animationDelay;
     [Export] private int _animationFrameCount;
 
@@ -30,9 +31,10 @@ public partial class LoreTexture : Resource
         ResourceName = sprite.Name;
         var bitmapNames = sprite.GetAllBitmapNames();
         Array<Image> images = [];
-        foreach (var image in bitmapNames.Select(loader.GetImage))
+        foreach (var image in bitmapNames.Select(loader.Get<LoreImage>))
         {
             images.Add(image);
+            _textureArrayPaths.Add(image.ResourcePath);
         }
 
         if (sprite.Animated)
@@ -59,6 +61,15 @@ public partial class LoreTexture : Resource
     {
         Trace.Assert(texture._textureType == Mode.Animated);
         return texture._textureArray;
+    }
+
+    public int Count
+    {
+        get
+        {
+            Trace.Assert(_textureType == Mode.Animated);
+            return _animationFrameCount;
+        }
     }
 
     private static Array<Image> ExpandTextureArray(Array<Image> list)
@@ -101,5 +112,62 @@ public partial class LoreTexture : Resource
         }
 
         return list;
+    }
+
+
+    public void Save(string path)
+    {
+        GD.Print($"LoreTexture: saving path: {path}");
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+
+        var info = LoreFileHandlingUtils.StartDump(this);
+        info.Add("images", _textureArrayPaths);
+        info.Add("mode", (int)_textureType);
+        if (_textureType == Mode.Animated)
+        {
+            info.Add("animation_delay", _animationDelay);
+            info.Add("animation_frame_count", _animationFrameCount);
+        }
+
+        file.StoreVar(info);
+    }
+
+    public static LoreTexture Load(string path)
+    {
+        GD.Print($"LoreTexture: loading path: {path}");
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+
+        var info = (Dictionary<string, Variant>)file.GetVar();
+        var result = new LoreTexture
+        {
+            _textureType = (Mode)(int)info["mode"],
+            _textureArrayPaths = (Array<string>)info["images"]
+        };
+
+        Array<Image> images = [];
+        foreach (var image in result._textureArrayPaths)
+        {
+            images.Add(LoreImage.Load(image));
+        }
+
+        if (result._textureType == Mode.Animated)
+        {
+            result._textureArray = new Texture2DArray();
+            result._textureArray.CreateFromImages(ExpandTextureArray(images));
+            result._animationDelay = (int)info["animation_delay"];
+            result._animationFrameCount = (int)info["animation_frame_count"];
+        }
+        else
+        {
+            result._texture = ImageTexture.CreateFromImage(images[0]);
+        }
+
+        LoreFileHandlingUtils.ApplyDump(result, info);
+        return result;
+    }
+
+    public static string GetExtension()
+    {
+        return ".lore_texture";
     }
 }

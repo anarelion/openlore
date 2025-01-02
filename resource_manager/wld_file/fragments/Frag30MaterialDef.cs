@@ -1,13 +1,11 @@
-﻿using System.Linq;
-using Godot;
-using OpenLore.resource_manager.interfaces;
+﻿using Godot;
 using OpenLore.resource_manager.wld_file.data_types;
 
 namespace OpenLore.resource_manager.wld_file.fragments;
 
 // Lantern Extractor class
 [GlobalClass]
-public partial class Frag30MaterialDef : WldFragment, IIntoGodotMaterial
+public partial class Frag30MaterialDef : WldFragment
 {
     [Export] public int Flags;
     [Export] public Frag05SimpleSprite SimpleSprite;
@@ -139,16 +137,7 @@ public partial class Frag30MaterialDef : WldFragment, IIntoGodotMaterial
 //                     }
 //                 ";
 //
-//                 var shader = new Shader()
-//                 {
-//                     Code = code,
-//                 };
-//
-//                 var animatedMaterial = new ShaderMaterial()
-//                 {
-//                     ResourceName = Name,
-//                     Shader = shader,
-//                 };
+//                 
 //                 animatedMaterial.SetShaderParameter("textures", texture2DArray);
 //                 animatedMaterial.SetShaderParameter("step_time", SimpleSprite.SimpleSpriteDef.AnimationDelayMs);
 //                 animatedMaterial.SetShaderParameter("total_time",

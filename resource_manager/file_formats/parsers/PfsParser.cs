@@ -10,9 +10,9 @@ namespace OpenLore.resource_manager.file_formats.parsers;
 
 public static class PfsParser
 {
-    public static async Task<PfsArchive> Load(string path)
+    public static PfsArchive Load(string path)
     {
-        var content = await File.ReadAllBytesAsync(path);
+        var content = File.ReadAllBytes(path);
         var fileLength = content.Length;
         var reader = new BinaryReader(new MemoryStream(content));
 
